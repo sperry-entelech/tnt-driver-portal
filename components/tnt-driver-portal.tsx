@@ -35,6 +35,13 @@ const TNTDriverPortal = () => {
     photo: "/api/placeholder/80/80",
   }
 
+  const companyInfo = {
+    name: "TNT Limousine Service",
+    phone: "(804) 972-4550",
+    email: "info@tntlimousine.com",
+    address: "Richmond, VA"
+  }
+
   const todaysTrips = [
     {
       id: 1,
