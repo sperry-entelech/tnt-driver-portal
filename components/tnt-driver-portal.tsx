@@ -28,17 +28,17 @@ const TNTDriverPortal = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [loadingAction, setLoadingAction] = useState("")
 
-  // Mock data - replace with Supabase calls
+  // Driver data - will be populated from Supabase login
   const driver = {
-    name: "John Martinez",
-    id: "D001",
+    name: "Kory Hummer Jr",
+    id: "TNT_KORY",
     photo: "/api/placeholder/80/80",
   }
 
   const companyInfo = {
     name: "TNT Limousine Service",
-    phone: "(804) 972-4550",
-    email: "info@tntlimousine.com",
+    phone: "(804) 965-0990",
+    email: "sedan@tntlimousine.com",
     address: "Richmond, VA"
   }
 
@@ -624,26 +624,160 @@ const TNTDriverPortal = () => {
       {currentView === "dashboard" && <Dashboard />}
       {currentView === "schedule" && (
         <div className="p-8 pb-32">
-          <h2 className="text-white text-3xl font-bold mb-8">Weekly Schedule</h2>
-          <p className="text-white text-xl">Schedule view coming soon...</p>
+          <div className="bg-gray-800 p-6 rounded-2xl mb-8">
+            <h2 className="text-white text-3xl font-bold mb-4">Weekly Schedule</h2>
+            <p className="text-red-400 text-lg">View your upcoming trips and assignments</p>
+          </div>
+          
+          <div className="space-y-6">
+            {todaysTrips.map((trip) => (
+              <div key={trip.id} className="bg-gray-800 rounded-2xl p-6 border-l-4 border-red-500">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h4 className="text-white font-bold text-xl">{trip.time}</h4>
+                    <p className="text-white text-lg">{trip.passenger}</p>
+                    <p className="text-gray-300 text-base">{trip.type}</p>
+                  </div>
+                  <span className={`px-4 py-2 rounded-lg text-sm font-bold ${
+                    trip.status === "confirmed" ? "bg-green-600 text-white" : "bg-yellow-600 text-white"
+                  }`}>
+                    {trip.status.toUpperCase()}
+                  </span>
+                </div>
+                <div className="text-gray-300 space-y-2">
+                  <div className="flex items-center">
+                    <MapPin className="w-5 h-5 mr-3 text-red-400" />
+                    <span>{trip.pickup} → {trip.dropoff}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Car className="w-5 h-5 mr-3 text-red-400" />
+                    <span>{trip.vehicle}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Clock className="w-5 h-5 mr-3 text-red-400" />
+                    <span>{trip.duration}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
       {currentView === "assignments" && (
         <div className="p-8 pb-32">
-          <h2 className="text-white text-3xl font-bold mb-8">Trip Assignments</h2>
-          <p className="text-white text-xl">Assignment center coming soon...</p>
+          <div className="bg-gray-800 p-6 rounded-2xl mb-8">
+            <h2 className="text-white text-3xl font-bold mb-4">Trip Assignments</h2>
+            <p className="text-red-400 text-lg">Manage your trip assignments and availability</p>
+          </div>
+          
+          <div className="space-y-6">
+            <div className="bg-gray-800 rounded-2xl p-6">
+              <h3 className="text-white text-xl font-bold mb-4">Available Assignments</h3>
+              <p className="text-gray-300 mb-4">No new assignments available at this time.</p>
+              <button className="bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-700">
+                Refresh Assignments
+              </button>
+            </div>
+            
+            <div className="bg-gray-800 rounded-2xl p-6">
+              <h3 className="text-white text-xl font-bold mb-4">Your Status</h3>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center">
+                  <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
+                  <span className="text-white">Available</span>
+                </div>
+                <button className="bg-gray-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-500">
+                  Change Status
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
       {currentView === "swaps" && (
         <div className="p-8 pb-32">
-          <h2 className="text-white text-3xl font-bold mb-8">Trip Swaps</h2>
-          <p className="text-white text-xl">Swap management coming soon...</p>
+          <div className="bg-gray-800 p-6 rounded-2xl mb-8">
+            <h2 className="text-white text-3xl font-bold mb-4">Trip Swaps</h2>
+            <p className="text-red-400 text-lg">Request trip swaps with other drivers</p>
+          </div>
+          
+          <div className="space-y-6">
+            <div className="bg-gray-800 rounded-2xl p-6">
+              <h3 className="text-white text-xl font-bold mb-4">My Trips Available for Swap</h3>
+              <div className="space-y-4">
+                {todaysTrips.slice(0, 2).map((trip) => (
+                  <div key={trip.id} className="bg-gray-700 rounded-lg p-4 flex justify-between items-center">
+                    <div>
+                      <p className="text-white font-bold">{trip.time} - {trip.passenger}</p>
+                      <p className="text-gray-300 text-sm">{trip.pickup}</p>
+                    </div>
+                    <button className="bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-yellow-700">
+                      Request Swap
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="bg-gray-800 rounded-2xl p-6">
+              <h3 className="text-white text-xl font-bold mb-4">Available Swaps</h3>
+              <p className="text-gray-300">No swap requests from other drivers at this time.</p>
+            </div>
+          </div>
         </div>
       )}
       {currentView === "profile" && (
         <div className="p-8 pb-32">
-          <h2 className="text-white text-3xl font-bold mb-8">Profile & Settings</h2>
-          <p className="text-white text-xl">Profile settings coming soon...</p>
+          <div className="bg-gray-800 p-6 rounded-2xl mb-8">
+            <h2 className="text-white text-3xl font-bold mb-4">Profile & Settings</h2>
+            <p className="text-red-400 text-lg">Manage your driver profile and preferences</p>
+          </div>
+          
+          <div className="space-y-6">
+            <div className="bg-gray-800 rounded-2xl p-6">
+              <div className="flex items-center space-x-6 mb-6">
+                <img
+                  src={driver.photo || "/placeholder.svg"}
+                  alt="Profile"
+                  className="w-20 h-20 rounded-full border-3 border-gray-600"
+                />
+                <div>
+                  <h3 className="text-white font-bold text-2xl">{driver.name}</h3>
+                  <p className="text-gray-300 text-lg">Driver ID: {driver.id}</p>
+                </div>
+              </div>
+              <button className="bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-700">
+                Edit Profile
+              </button>
+            </div>
+            
+            <div className="bg-gray-800 rounded-2xl p-6">
+              <h3 className="text-white text-xl font-bold mb-4">Contact Information</h3>
+              <div className="space-y-3 text-gray-300">
+                <p><span className="font-bold">Email:</span> koryjr@tntlimousine.com</p>
+                <p><span className="font-bold">Phone:</span> {companyInfo.phone}</p>
+                <p><span className="font-bold">Company:</span> {companyInfo.name}</p>
+              </div>
+            </div>
+            
+            <div className="bg-gray-800 rounded-2xl p-6">
+              <h3 className="text-white text-xl font-bold mb-4">Preferences</h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-white">Push Notifications</span>
+                  <button className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm">Enabled</button>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-white">Email Updates</span>
+                  <button className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm">Enabled</button>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-white">Auto-Accept Assignments</span>
+                  <button className="bg-gray-600 text-white px-4 py-2 rounded-lg text-sm">Disabled</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
