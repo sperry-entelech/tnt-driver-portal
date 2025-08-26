@@ -24,7 +24,7 @@ const TNTDriverPortal = () => {
   const [showTripModal, setShowTripModal] = useState(false)
   const [selectedTrip, setSelectedTrip] = useState(null)
   const [pendingAssignment, setPendingAssignment] = useState(null)
-  const [notifications, setNotifications] = useState(3)
+  const [notifications, setNotifications] = useState(0) // Start with 0, bell will trigger demo notification
   const [isLoading, setIsLoading] = useState(false)
   const [loadingAction, setLoadingAction] = useState("")
 
@@ -142,6 +142,19 @@ const TNTDriverPortal = () => {
     setLoadingAction("")
   }
 
+  const handleNotificationClick = () => {
+    // If there are notifications, go to assignments. If not, simulate getting a new assignment
+    if (notifications > 0 || pendingAssignment) {
+      setCurrentView("assignments")
+    } else {
+      // Simulate receiving a new assignment notification
+      setPendingAssignment(mockAssignment)
+      setNotifications(1)
+      // Auto-show the assignment modal after a brief delay
+      setTimeout(() => setShowAssignmentModal(true), 500)
+    }
+  }
+
   const LoginPage = () => (
     <div className="min-h-screen bg-black flex flex-col justify-center px-8">
       <div className="max-w-lg mx-auto w-full">
@@ -216,20 +229,24 @@ const TNTDriverPortal = () => {
               <p className="text-gray-100 text-xl">ID: {driver.id}</p>
             </div>
           </div>
-          <div className="flex items-center space-x-8">
-            <div className="relative">
+          <div className="flex items-center space-x-6">
+            <button
+              onClick={handleNotificationClick}
+              className="relative p-4 hover:bg-gray-700 rounded-xl transition duration-200 min-h-[56px] min-w-[56px]"
+            >
               <Bell className="text-white w-10 h-10" />
               {notifications > 0 && (
-                <span className="absolute -top-3 -right-3 bg-red-500 text-white text-lg font-bold rounded-full w-9 h-9 flex items-center justify-center border-2 border-white shadow-lg">
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-lg font-bold rounded-full w-9 h-9 flex items-center justify-center border-2 border-white shadow-lg">
                   {notifications}
                 </span>
               )}
-            </div>
+            </button>
             <button
               onClick={() => setCurrentView("login")}
-              className="p-4 hover:bg-gray-700 rounded-xl transition duration-200 min-h-[56px] min-w-[56px]"
+              className="flex items-center space-x-3 px-6 py-3 hover:bg-gray-700 rounded-xl transition duration-200 bg-red-600 hover:bg-red-700"
             >
-              <LogOut className="text-white w-10 h-10" />
+              <LogOut className="text-white w-6 h-6" />
+              <span className="text-white font-bold text-lg">Sign Out</span>
             </button>
           </div>
         </div>
