@@ -1,5 +1,5 @@
-import TNTDriverPortal from "@/components/tnt-driver-portal"
+import TNTPortalEnhanced from "@/components/tnt-portal-enhanced"
 
 export default function Page() {
-  return <TNTDriverPortal />
+  return <TNTPortalEnhanced />
 }
