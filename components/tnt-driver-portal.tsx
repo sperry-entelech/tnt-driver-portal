@@ -38,6 +38,12 @@ const TNTDriverPortal = () => {
 
   // Notifications count based on unassigned trips
   const notifications = unassignedTrips.length
+  
+  // Check for emergency organ transport trips
+  const emergencyTrips = unassignedTrips.filter(trip => 
+    trip.trip_type === 'organ_transport' || 
+    trip.special_instructions?.includes('EMERGENCY ORGAN TRANSPORT')
+  )
 
   const companyInfo = {
     name: "TNT Limousine Service",
@@ -72,13 +78,14 @@ const TNTDriverPortal = () => {
     }
   }, [isAuthenticated, currentView])
 
-  // Handle new unassigned trips (notifications)
+  // Handle new unassigned trips (notifications) - prioritize emergency trips
   useEffect(() => {
     if (unassignedTrips.length > 0 && !pendingAssignment) {
-      // Set the first unassigned trip as pending assignment
-      setPendingAssignment(unassignedTrips[0])
+      // Prioritize emergency organ transport trips
+      const nextAssignment = emergencyTrips.length > 0 ? emergencyTrips[0] : unassignedTrips[0]
+      setPendingAssignment(nextAssignment)
     }
-  }, [unassignedTrips, pendingAssignment])
+  }, [unassignedTrips, pendingAssignment, emergencyTrips])
 
   const handleAcceptAssignment = async () => {
     if (!pendingAssignment) return
@@ -93,11 +100,9 @@ const TNTDriverPortal = () => {
         setShowAssignmentModal(false)
         setPendingAssignment(null)
       } else {
-        console.error('Failed to accept trip:', result.error)
         // You could show an error message to the user here
       }
     } catch (error) {
-      console.error('Error accepting trip:', error)
     } finally {
       setIsLoading(false)
       setLoadingAction("")
@@ -213,7 +218,6 @@ const TNTDriverPortal = () => {
                   className="text-red-400 text-lg hover:text-red-300 hover:underline min-h-[48px] px-2"
                   onClick={() => {
                     // Handle forgot password - could open a modal or navigate to reset page
-                    console.log('Forgot password clicked')
                   }}
                 >
                   Forgot password?
@@ -304,15 +308,42 @@ const TNTDriverPortal = () => {
 
       {pendingAssignment && (
         <div className="mx-8 my-8">
-          <div className="bg-red-900 border-4 border-red-400 rounded-2xl p-8 shadow-2xl animate-pulse">
+          <div className={`border-4 rounded-2xl p-8 shadow-2xl animate-pulse ${
+            pendingAssignment.trip_type === 'organ_transport' || pendingAssignment.special_instructions?.includes('EMERGENCY ORGAN TRANSPORT')
+              ? 'bg-red-950 border-red-300 ring-4 ring-red-500/50' 
+              : 'bg-red-900 border-red-400'
+          }`}>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-white font-bold text-3xl">🚨 NEW ASSIGNMENT</h3>
-              <div className="bg-red-600 px-6 py-4 rounded-xl border-2 border-red-300">
-                <span className="text-white font-mono text-2xl font-black">
-                  URGENT
-                </span>
-              </div>
+              {pendingAssignment.trip_type === 'organ_transport' || pendingAssignment.special_instructions?.includes('EMERGENCY ORGAN TRANSPORT') ? (
+                <>
+                  <h3 className="text-white font-bold text-4xl">🚨 EMERGENCY ORGAN TRANSPORT 🚨</h3>
+                  <div className="bg-red-500 px-6 py-4 rounded-xl border-2 border-red-200 animate-bounce">
+                    <span className="text-white font-mono text-3xl font-black">
+                      ❤️ CRITICAL
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-white font-bold text-3xl">🚨 NEW ASSIGNMENT</h3>
+                  <div className="bg-red-600 px-6 py-4 rounded-xl border-2 border-red-300">
+                    <span className="text-white font-mono text-2xl font-black">
+                      URGENT
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
+            
+            {/* Special organ transport display */}
+            {(pendingAssignment.trip_type === 'organ_transport' || pendingAssignment.special_instructions?.includes('EMERGENCY ORGAN TRANSPORT')) && (
+              <div className="mb-6 text-center">
+                <div className="text-8xl mb-4">❤️</div>
+                <div className="text-white text-2xl font-bold">ORGAN TRANSPORT REQUIRED</div>
+                <div className="text-red-200 text-lg mt-2">Every second counts - immediate response needed</div>
+              </div>
+            )}
+            
             <div className="text-white mb-8">
               <p className="font-bold text-2xl mb-2">
                 {formatTripTime(pendingAssignment.pickup_time)} - {pendingAssignment.customer_name}
@@ -321,12 +352,24 @@ const TNTDriverPortal = () => {
               <p className="text-red-200 text-lg mt-2">
                 {pendingAssignment.trip_type.charAt(0).toUpperCase() + pendingAssignment.trip_type.slice(1)} Trip
               </p>
+              {pendingAssignment.special_instructions && (
+                <p className="text-yellow-200 text-lg mt-3 font-semibold bg-red-800/50 p-3 rounded-lg">
+                  {pendingAssignment.special_instructions}
+                </p>
+              )}
             </div>
             <button
               onClick={() => setShowAssignmentModal(true)}
-              className="w-full bg-red-500 text-white py-8 text-2xl rounded-2xl font-black hover:bg-red-600 active:bg-red-700 transition duration-200 min-h-[80px] shadow-xl border-2 border-red-300"
+              className={`w-full text-white py-8 text-2xl rounded-2xl font-black transition duration-200 min-h-[80px] shadow-xl border-2 ${
+                pendingAssignment.trip_type === 'organ_transport' || pendingAssignment.special_instructions?.includes('EMERGENCY ORGAN TRANSPORT')
+                  ? 'bg-red-600 hover:bg-red-700 active:bg-red-800 border-red-200 animate-pulse'
+                  : 'bg-red-500 hover:bg-red-600 active:bg-red-700 border-red-300'
+              }`}
             >
-              VIEW DETAILS NOW
+              {pendingAssignment.trip_type === 'organ_transport' || pendingAssignment.special_instructions?.includes('EMERGENCY ORGAN TRANSPORT')
+                ? '🚨 ACCEPT EMERGENCY TRANSPORT NOW 🚨'
+                : 'VIEW DETAILS NOW'
+              }
             </button>
           </div>
         </div>
@@ -587,11 +630,9 @@ const TNTDriverPortal = () => {
         setShowTripModal(false)
         // The trips will be updated via the useTrips hook
       } else {
-        console.error('Failed to update trip status:', result.error)
         // Could show error message to user here
       }
     } catch (error) {
-      console.error('Error updating trip status:', error)
     } finally {
       setIsLoading(false)
     }

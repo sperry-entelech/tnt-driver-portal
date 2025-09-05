@@ -79,7 +79,6 @@ const TNTPortalEnhanced = () => {
 
   const updateTripStatus = (tripId: string, newStatus: string) => {
     // This would normally call a database update function
-    console.log(`Updating trip ${tripId} to status ${newStatus}`)
   }
 
   const getStatusColor = (status: string) => {

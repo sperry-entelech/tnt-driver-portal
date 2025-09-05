@@ -50,7 +50,6 @@ export function useTrips(driverId: string | null): UseTripsReturn {
 
     } catch (err) {
       setError('Failed to load trips')
-      console.error('Error loading trips:', err)
     } finally {
       setIsLoading(false)
     }
@@ -116,7 +115,6 @@ export function useTrips(driverId: string | null): UseTripsReturn {
     const driverTripsSubscription = DatabaseService.subscribeToDriverTrips(
       driverId,
       (payload) => {
-        console.log('Driver trip change:', payload)
         refreshTrips() // Refresh data when changes occur
       }
     )
@@ -124,7 +122,6 @@ export function useTrips(driverId: string | null): UseTripsReturn {
     // Subscribe to unassigned trips for notifications
     const unassignedSubscription = DatabaseService.subscribeToUnassignedTrips(
       (payload) => {
-        console.log('Unassigned trip change:', payload)
         refreshTrips() // Refresh to get latest unassigned trips
       }
     )

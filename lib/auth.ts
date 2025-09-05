@@ -80,7 +80,6 @@ export class AuthService {
 
       return driver
     } catch (error) {
-      console.error('Error getting current driver:', error)
       return null
     }
   }
