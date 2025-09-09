@@ -23,10 +23,21 @@ import {
   DollarSign,
   MessageSquare,
   ChevronRight,
-  Plus
+  Plus,
+  BookOpen
 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { useTrips } from "@/hooks/useTrips"
+import OnboardingFlow from "@/components/driver-onboarding"
+import ScheduleManagement from "@/components/schedule-management"
+import TripHistory from "@/components/trip-history"
+import SmartTripCard from "@/components/smart-trip-card"
+import QuickActionsToolbar from "@/components/quick-actions-toolbar"
+import SmartNotifications from "@/components/smart-notifications"
+import OneTouchCommunication from "@/components/one-touch-communication"
+import VoiceCommands from "@/components/voice-commands"
+import KeyboardShortcuts from "@/components/keyboard-shortcuts"
+import AvailabilityToggle from "@/components/availability-toggle"
 
 const TNTPortalEnhanced = () => {
   const [currentView, setCurrentView] = useState("login")
@@ -36,17 +47,26 @@ const TNTPortalEnhanced = () => {
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [selectedTrip, setSelectedTrip] = useState<any>(null)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [communicationTrip, setCommunicationTrip] = useState<any>(null)
+  const [showCommunication, setShowCommunication] = useState(false)
   
   // Authentication and data hooks
   const { driver, loading: authLoading, isAuthenticated, signIn, signOut } = useAuth()
   const { todaysTrips, isLoading: tripsLoading } = useTrips(driver?.id || null)
 
-  // Auto-redirect to dashboard if authenticated
+  // Auto-redirect to dashboard if authenticated and check onboarding status
   useEffect(() => {
     if (isAuthenticated && currentView === "login") {
-      setCurrentView("dashboard")
+      // Check if driver needs onboarding (you can add a field to check this)
+      const needsOnboarding = !driver?.onboarding_completed
+      if (needsOnboarding) {
+        setShowOnboarding(true)
+      } else {
+        setCurrentView("dashboard")
+      }
     }
-  }, [isAuthenticated, currentView])
+  }, [isAuthenticated, currentView, driver])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -79,6 +99,8 @@ const TNTPortalEnhanced = () => {
 
   const updateTripStatus = (tripId: string, newStatus: string) => {
     // This would normally call a database update function
+    console.log(`Updating trip ${tripId} to status: ${newStatus}`)
+    // You would implement actual database update here
   }
 
   const getStatusColor = (status: string) => {
@@ -194,6 +216,23 @@ const TNTPortalEnhanced = () => {
     )
   }
 
+  // Show onboarding flow if needed
+  if (showOnboarding && driver) {
+    return (
+      <OnboardingFlow
+        driver={driver}
+        onComplete={() => {
+          setShowOnboarding(false)
+          setCurrentView("dashboard")
+        }}
+        onSkip={() => {
+          setShowOnboarding(false)
+          setCurrentView("dashboard")
+        }}
+      />
+    )
+  }
+
   // Dashboard with Navigation
   if (!driver) return null
 
@@ -211,18 +250,89 @@ const TNTPortalEnhanced = () => {
                 e.currentTarget.src = "/placeholder.svg"
               }}
             />
-            <div>
+            <div className="flex-1">
               <h3 className="text-white font-bold text-xl">{driver.name}</h3>
               <p className="text-gray-100 text-lg">ID: {driver.employee_id}</p>
             </div>
+            <div className="mr-4">
+              <AvailabilityToggle
+                driver={driver}
+                compact={true}
+                showStatus={true}
+                onStatusChange={async (status) => {
+                  console.log('Availability changed to:', status)
+                  // Update driver availability in database
+                  // This would normally call your API/Supabase update
+                }}
+              />
+            </div>
           </div>
-          <button
-            onClick={handleSignOut}
-            className="flex items-center space-x-2 px-4 py-2 hover:bg-gray-700 rounded-xl transition duration-200 bg-red-600 hover:bg-red-700"
-          >
-            <LogOut className="text-white w-5 h-5" />
-            <span className="text-white font-bold">Sign Out</span>
-          </button>
+          <div className="flex items-center space-x-3">
+            <VoiceCommands
+              driver={driver}
+              todaysTrips={todaysTrips}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              onTripAction={(action, tripId) => {
+                // Handle voice-activated trip actions
+                if (action === 'start-trip' && tripId) {
+                  updateTripStatus(tripId, 'in-progress')
+                } else if (action === 'complete-trip' && tripId) {
+                  updateTripStatus(tripId, 'completed')
+                }
+              }}
+              onOpenCommunication={(trip) => {
+                setCommunicationTrip(trip)
+                setShowCommunication(true)
+              }}
+              onAvailabilityChange={(status) => {
+                // Handle availability changes via voice
+                console.log('Voice command: change availability to', status)
+                // You would update driver availability in database here
+              }}
+            />
+            <KeyboardShortcuts
+              driver={driver}
+              todaysTrips={todaysTrips}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              onTripAction={(action, tripId) => {
+                // Handle keyboard-activated trip actions
+                if (action === 'start-trip' && tripId) {
+                  updateTripStatus(tripId, 'in-progress')
+                } else if (action === 'complete-trip' && tripId) {
+                  updateTripStatus(tripId, 'completed')
+                }
+              }}
+              onOpenCommunication={(trip) => {
+                setCommunicationTrip(trip)
+                setShowCommunication(true)
+              }}
+            />
+            <SmartNotifications 
+              driver={driver}
+              todaysTrips={todaysTrips}
+              onNotificationAction={(notificationId, action) => {
+                console.log('Notification action:', notificationId, action)
+                // Handle notification actions
+              }}
+            />
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-700 rounded-xl transition duration-200 text-gray-300 hover:text-white"
+              title="Help & Tutorial"
+            >
+              <BookOpen className="w-5 h-5" />
+              <span className="hidden sm:inline font-medium">Help</span>
+            </button>
+            <button
+              onClick={handleSignOut}
+              className="flex items-center space-x-2 px-4 py-2 hover:bg-gray-700 rounded-xl transition duration-200 bg-red-600 hover:bg-red-700"
+            >
+              <LogOut className="text-white w-5 h-5" />
+              <span className="text-white font-bold">Sign Out</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -277,7 +387,7 @@ const TNTPortalEnhanced = () => {
       </div>
 
       {/* Content Area */}
-      <div className="p-6">
+      <div className="p-6 pb-20 sm:pb-6">
         {/* Dashboard Tab */}
         {activeTab === "dashboard" && (
           <div>
@@ -352,41 +462,24 @@ const TNTPortalEnhanced = () => {
               ) : (
                 <div className="space-y-4">
                   {todaysTrips.map((trip) => (
-                    <div
+                    <SmartTripCard
                       key={trip.id}
-                      className="bg-gray-700 rounded-xl p-4 border-l-4 border-red-500 hover:bg-gray-600 transition-colors cursor-pointer"
-                      onClick={() => setSelectedTrip(trip)}
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h4 className="text-white font-bold text-lg">
-                            {new Date(trip.pickup_time).toLocaleTimeString('en-US', {
-                              hour: 'numeric',
-                              minute: '2-digit',
-                              hour12: true
-                            })}
-                          </h4>
-                          <p className="text-white">{trip.customer_name}</p>
-                        </div>
-                        <div className={`flex items-center space-x-2 px-3 py-1 rounded-lg text-sm font-bold ${getStatusColor(trip.status)}`}>
-                          {getStatusIcon(trip.status)}
-                          <span>{trip.status.toUpperCase()}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center text-gray-300 mb-2">
-                        <MapPin className="w-4 h-4 mr-2 text-red-400" />
-                        <span className="text-sm">{trip.pickup_location}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center text-gray-300">
-                          <Clock className="w-4 h-4 mr-2 text-red-400" />
-                          <span className="text-sm">
-                            {trip.estimated_duration ? `${Math.floor(trip.estimated_duration / 60)}h ${trip.estimated_duration % 60}m` : 'Duration TBD'}
-                          </span>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-gray-400" />
-                      </div>
-                    </div>
+                      trip={trip}
+                      onStatusUpdate={async (tripId, newStatus) => {
+                        // Update trip status in database
+                        console.log('Updating trip status:', tripId, newStatus)
+                        // You would implement the actual update logic here
+                      }}
+                      onSendMessage={async (tripId, message) => {
+                        // Send message to customer
+                        console.log('Sending message:', tripId, message)
+                        // You would implement SMS/messaging logic here
+                      }}
+                      onOpenCommunication={(trip) => {
+                        setCommunicationTrip(trip)
+                        setShowCommunication(true)
+                      }}
+                    />
                   ))}
                 </div>
               )}
@@ -396,38 +489,12 @@ const TNTPortalEnhanced = () => {
 
         {/* Schedule Tab */}
         {activeTab === "schedule" && (
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-white text-3xl font-bold">Weekly Schedule</h2>
-              <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center space-x-2">
-                <Plus className="w-5 h-5" />
-                <span>Request Time Off</span>
-              </button>
-            </div>
-            
-            <div className="bg-gray-800 rounded-xl p-6">
-              <div className="text-center py-8">
-                <CalendarDays className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                <h4 className="text-white text-xl font-bold mb-2">Schedule Management Coming Soon</h4>
-                <p className="text-gray-300">View and manage your weekly schedule, request time off, and set availability.</p>
-              </div>
-            </div>
-          </div>
+          <ScheduleManagement driver={driver} />
         )}
 
         {/* Trips Tab */}
         {activeTab === "trips" && (
-          <div>
-            <h2 className="text-white text-3xl font-bold mb-6">All My Trips</h2>
-            
-            <div className="bg-gray-800 rounded-xl p-6">
-              <div className="text-center py-8">
-                <Car className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                <h4 className="text-white text-xl font-bold mb-2">Trip History Coming Soon</h4>
-                <p className="text-gray-300">View your complete trip history, earnings, and performance metrics.</p>
-              </div>
-            </div>
-          </div>
+          <TripHistory driver={driver} />
         )}
 
         {/* Profile Tab */}
@@ -599,6 +666,50 @@ const TNTPortalEnhanced = () => {
           </div>
         </div>
       )}
+      
+      {/* One-Touch Communication Modal */}
+      {showCommunication && communicationTrip && (
+        <OneTouchCommunication
+          trip={communicationTrip}
+          isVisible={showCommunication}
+          onClose={() => {
+            setShowCommunication(false)
+            setCommunicationTrip(null)
+          }}
+          onSendMessage={async (message: string) => {
+            // Implement SMS/messaging logic
+            console.log('Sending message to customer:', message)
+            // You would integrate with your SMS service here
+            await new Promise(resolve => setTimeout(resolve, 1000)) // Mock delay
+          }}
+          onCall={() => {
+            if (communicationTrip?.customer_phone) {
+              window.open(`tel:${communicationTrip.customer_phone}`, '_self')
+            }
+          }}
+          onNavigate={() => {
+            if (communicationTrip?.pickup_location) {
+              const query = encodeURIComponent(communicationTrip.pickup_location)
+              window.open(`https://maps.google.com/maps?q=${query}`, '_blank')
+            }
+          }}
+        />
+      )}
+
+      {/* Quick Actions Toolbar */}
+      <QuickActionsToolbar 
+        driver={driver}
+        onEmergency={() => {
+          // Handle emergency action
+          if (window.confirm('This will call emergency services. Continue?')) {
+            window.open('tel:911', '_self')
+          }
+        }}
+        onDispatchCall={() => {
+          // Handle dispatch call
+          window.open('tel:+15551234567', '_self')
+        }}
+      />
     </div>
   )
 }
