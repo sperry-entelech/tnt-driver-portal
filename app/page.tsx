@@ -1,5 +1,5 @@
-import TNTPortalEnhanced from "@/components/tnt-portal-enhanced"
+import SimpleTest from "./page-simple-test"
 
 export default function Page() {
-  return <TNTPortalEnhanced />
+  return <SimpleTest />
 }
