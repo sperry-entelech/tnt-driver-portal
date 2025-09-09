@@ -8,20 +8,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables')
 }
 
-// Create client with minimal, clean configuration to avoid headers issues
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true
-  },
-  global: {
-    headers: {}
-  },
-  db: {
-    schema: 'public'
-  }
-})
+// Create client with absolutely minimal configuration to avoid any headers issues
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Database types
 export interface Driver {
